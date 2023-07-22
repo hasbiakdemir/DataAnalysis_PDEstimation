@@ -66,15 +66,36 @@ I also utilised the GridSearchCV method to tune AdaSyn’s n_neighbors parameter
 
 After my initial attempt at oversampling, I decided to move forward with undersampling. I utilised Imblearn’s `RandomUnderSampler` class to create a balanced training dataset. It undersamples the majority class by randomly picking samples with or without replacement. I used the default sampling strategy. After this step, I repeat the previous RFECV step to select the best features. 61 features are selected by the model training with around 315K observations.
 
+## Models
+### Random Forest
 
-## Model Results
+Random Forest is a widely used ensemble learning method. It combines the predictions of multiple decision trees to create a robust and accurate model for tasks like classification or regression. One of the advantages of the Random Forest is that it has a good ability to handle high dimensional data and does not exacerbate bias since it belongs to the bagging family. However, Random Forest model is prone to overfitting and after I initailly trained my model, I achieved high score of accuracy on the train set but very low accuracy on the test set. This says that the model is overfitted.
+
+In order to overcome the overfitting problem, I employed additional hyperparameters to tune called `max_depth` and `n_estimators`. The max_depth parameter controls the maximum allowed depth for each decision tree within the Random Forest. By limiting this parameter, we can prevent the trees from becoming excessively intricate and prone to overfitting. Similarly, n_estimators can help mitigate overfitting. In the Random Forest, each estimator is trained independently on a random subset of the data, and their predictions are combined to make the final prediction. By increasing the number of estimators, we introduce more randomness and diversity into the model. I ran GridSearchCV with Stratifed CV to tune this parameters to obtain the best values for the parameters to get rid of the overfitting problem.
+
+### XGBoost
+
+XGBoost, is an algorithm for optimizing gradient boosting that excels at efficiency and scalability. It solves various classification, regression, and ranking problems. It is an effective algorithm since it can handle big datasets, handle missing values, and capture complex relationships. I chose this model because unlike Random Forest, it is a boosting algorithm and it would be interesting to compare the results of both models on the same problem.
+
+## Explainability
+
+I looked at both models' explainability using `SHAP`. The features that explain and influence the decision of both models are `Sub-Grade`, `int_rate`, and `term`, and `loan_amnt` which makes sense. Because the grade of the loan, interest rate, term, and the loan amount are usually the most important factors when we decide whether we should not give loans.
+
+## Conclusion Model Results
+
+We see that all of the models that I built have similar Accuracy and AUC Score. However, our problem is predicting the status of the loan. Therefore, Precision should be considered as the most important performance metric. Because in the prediction of default or fraud, identifying the defaults correctly is essential while minimizing false positive. Therefore, precision serves as a measure of our models’ effectiveness in accurately identifying true charged off status among all the observations that they classify as positive.
+
+In conclusion, the model into production with the highest precision score and F1-Score which is Logistic Regression should be implemented since the other performance metrics are similar to each other. After implementing the Logistic Regression model as the champion model, I should go back to the beginning and improve the prediction power of my challenger models as they consist of greater potential than logistic regression.
+
 | Model                   | Accuracy | AUC    | Precision | F1     |
 | ----------------------- |:--------:|:------:|:---------:|:------:|
 | Logistic Regression     | 0.6581   | 0.6539 | 0.8823    | 0.7557 |
 | Random Forest           | 0.6324   | 0.6532 | 0.3104    | 0.4278 |
 | XGBoost                 | 0.6468   | 0.6568 | 0.3194    | 0.4344 |
 
+## Final Remarks
 
+In the project, I tried to implement my data analysis knowledge on a business problem which is one of the most important issues in finance, especially for Banks. My aim was not to build the best model in this project. The main goal for me is to try as many data analysis techniques as possible and look for areas for development.
 
 ## References
 
