@@ -5,39 +5,67 @@ In this notebook, I aimed to predict whether a loan was going to be charged off 
 ## Data Description and Data Preprocessing
 ### Data Description
 
-The Lending Club data is a complex dataset, containing over 2.260.700 accepted loan records with 151 columns of data. The loans are issued on the peer-to-peer lending platform. This platform allows small businesses and individuals to borrow money directly from investors, instead of using intermediaries. The data ranges from 2007 to 2018.
+The Lending Club data is an highly-imbalanced and complex dataset, containing over 2.260.700 accepted loan records with 151 columns of data. The loans are issued on the peer-to-peer lending platform. This platform allows small businesses and individuals to borrow money directly from investors, instead of using intermediaries. The data ranges from 2007 to 2018.
 
-The records in the data represent a single loan holder with individual characteristics, which will serve as my explanatory variables in the credit default prediction. Our target variable, after data processing, can be divided into two categories:
+The records in the data represent a single loan holder with individual characteristics, which will serve as my explanatory variables in the credit default prediction. The target variable, after data processing, can be divided into two categories:
 - Assigned `0` for loan statuses: `Fully Paid` and `Does not meet the credit policy. Status: Fully Paid`.
 - Assigned `1` for the loan statuses: `Charged Off` and `Does not meet the credit policy. Status: Charged Off`.
 
 ### Data Preprocessing
 #### Missing Features
+
 The first step is to remove columns with too many missing values. The dataset has 151 columns, however, some columns have over 90% missing values which is not possible to extract valuable information. Therefore, I decided to drop columns with more than 50% missing data. This cutoff has deleted 58 columns and left 93 columns with a maximum percentage of missing values of 13.12%, which it would make sense to apply imputation to fill the missing values.
 
 #### Outcome Bias and Information Reduction
-Several features were not known at the origin of the loan, and therefore, can not be used in default prediction because of the `Outcome Bias`. These feature will be dropped to eliminate the bias in the model, allowing to the creation of a model that is not influenced by factors. Using these features lead to data leakage because they convey information about the ability of the loan holder to pay back the loan after the loan has been funded. Furthermore, the ID feature is not important and the categorical variables that have too many unique values (`Emp Title`) have also been dropped. After this process, there are 31 features left. These features will form the basis for our feature selection process.
+
+Several features were not known at the origin of the loan, and therefore, can not be used in default prediction because of the `Outcome Bias`. These feature will be dropped to eliminate the bias in the model, allowing to the creation of a model that is not influenced by factors. Using these features lead to data leakage because they convey information about the ability of the loan holder to pay back the loan after the loan has been funded. Furthermore, the ID feature is not important and the categorical variables that have too many unique values (`Emp Title`) have also been dropped. After this process, there are 31 features left. These features will form the basis for my feature selection process.
 
 #### Imputing Missing Values
+
 I tried to employed Factor Analysis of Mixed Data (FAMD) to impute missing values for both categorical and numerical variables. However, due to the dataset’s size and FAMD's memory need, I could not use it. As a result, an alternative approach using MissForest was explored, which leverages the Random Forest model for imputing missing values but it was computataionally exhaustive.
 
 To overcome these challenges, the MICE Forest algorithm coupled with LightGBM estimator was adopted for missing data imputation. MICE Forest enables the use of diverse predictive models as estimators such as LightGBM. It works for both numerical and categorical variables and it takes significantly less amount of time to be completed, compared to the methods above.
 
 ## Exploratory Data Analysis
 
-In the next step, I went over the features that will be based for feature elimination. When I look at the 31 features, I see that some of the features do not contain distinctive information. For example, `Grade` feature is eliminated because it is embedded in `Sub-grade`. `Policy Code` feature only contains the value of 1, meaning that there is no information to be extracted from the feature. Also, only the features that are unknown before lending out the loans should be passed to the models. Therefore, `Issue_d` from our analysis. The other variables that are excluded from the analysis because of their high unique values are as follows: `Title`, `URL`, and `Zip Code`. Finally, there are 25 features left.
+In the next step, I went over the features that will be based for feature elimination. When I look at the 31 features, I see that some of the features do not contain distinctive information. For example, `Grade` feature is eliminated because it is embedded in `Sub-grade`. `Policy Code` feature only contains the value of 1, meaning that there is no information to be extracted from the feature. Also, only the features that are unknown before lending out the loans should be passed to the models. Therefore, `Issue_d` from my analysis. The other variables that are excluded from the analysis because of their high unique values are as follows: `Title`, `URL`, and `Zip Code`. Finally, there are 25 features left.
 
 ### Outliers
 
-I plot the histograms (countplots for categorical), box-plots, distributions (barplots for categorical) of Fully Paid and Charged-Off loans. If there is an outlier and skewness in the distribution, I applied either squareroot or log transformation to mitigate the effects of the outliers. Moreover, I grouped the values of some of the categorical variables to obtain more generalised outcomes.
+I plot the histograms (countplots for categorical), boxplots, and distributions (barplots for categorical) of Fully Paid and Charged-Off loans. If there is an outlier and skewness in the distribution, I applied either squareroot or log transformation to mitigate the effects of the outliers. Moreover, I grouped the values of some of the categorical variables to obtain more generalised outcomes.
 
 ### Statistical Hypothesis Testing
+
 For numerical features, I utilised Kolmogorov-Smirnov test (KS Test) to see whether the features’ distributions based on the target feature (`loan_status`) are statistically different from each other. For categorical variables, Chi-Squared test (CS Test) is applied to check whether the observed frequencies are statistically different from what would be expected by chance and whether there is a significant association between the categorical and the target features.
 
 ### Weight of Evidence (WOE) and Information Value (IV)
+
 To check the importance of a categorical variable, I also calculated information value (IV) which if it is higher than 0.4, it indicates that the categorical variable is a good feature. WOE tells the predictive power of an features in relation to the target. IV helps to rank features based on their importance. I did not use IV as an elimination criteria. I utilised it to see which features might be important.
 
-## Feature Selection
+## Standardisation, Encoding, and Correlation
+
+After looking at the variables, the next steps were the encoding and standardisation of the features in the dataset. ML algorithms work best with standardisation. Standardization is a method where the observations are centred around the mean with one unit standard deviation, meaning that the mean of the feature becomes zero, and the distribution has a unit standard deviation. Therefore, I have used standardisation for numerical variables and one-hot encoding and label encoding for the features that have ordinal relationships such as `Sub-Grade` for categorical variables. After making these transformations, there were over 1.3 million observations with 98 features. When I look at the correlation map, I see that `installment` and `loan_amnt`, `total_acc` and `open_acc`, `mo_sin_old_rev_tl_op` and `earliest_cr_line` is highly correlated. Therefore, `installment`, `total_acc`, and `mo_sin_old_rev_tl_op` is decided to be dropped.
+
+## Splitting the Dataset, Feature Selection, and Deciding Oversampling vs. Undersampling
+### Splitting the Dataset
+
+I split my dataset into three parts by selecting random observations: train, validation, and test: 60% for training, and 20% for validation and test data for each. 
+
+### Feature Selection
+After looking at correlations, I used recursive feature elimination with cross-validation to select features. Recursive Feature Elimination with Cross-Validation (RFECV) is a feature selection technique that combines two popular methods (recursive feature elimination and cross-validation), to automatically identify the most relevant features for a given model.
+
+The RFECV method works by recursively eliminating less important features and assessing the model’s performance using cross-validation. The initial step involves ranking all input features based on their importance. Then, it iteratively eliminates the least significant features until arriving at the desired number of remaining features. During each iteration, the model undergoes training and evaluation using cross-validation to estimate its performance accurately.
+
+This process helps identify critical features that contribute significantly to predictive power while reducing dimensionality in high-dimensional datasets. As an estimator, we utilised LightGBM - a gradient-boosting framework known for handling large-scale datasets efficiently and accurately.
+
+### Deciding Oversampling vs. Undersampling
+
+Since this is an imbalanced dataset, after splitting my dataset, I decided to try taking the hardest route and oversampling my data with the ADASYN method. Adaptive Synthetic Sampling (ADASYN) is a data augmentation technique that addresses the issue of class imbalance in machine learning. Class imbalance occurs when one class has significantly more or fewer instances than another, leading to biased model performance and my data has this problem. The ADASYN approach generates synthetic samples for the minority class by examining the density distribution of each feature and generating new examples along directions where data points are scarce.
+
+I also utilised the GridSearchCV method to tune ADASYN’s n_neighbors parameter with Stratified CV which is a technique in machine learning to evaluate the performance of classification models on imbalanced datasets. However, since the dataset got even bigger, the Recursive Feature Selection with GridSearchCV (RFECV) algorithm to select important features took a lot of time. Furthermore, I tried to train my first ML model using the linear SVM algorithm but it was computationally exhaustive to train around 1.3 million observations with 48 features.
+
+After my initial attempt at oversampling, I decided to move forward with undersampling. I utilised Imblearn’s `RandomUnderSampler` class to create a balanced training dataset. It undersamples the majority class by randomly picking samples with or without replacement. I used the default sampling strategy. After this step, I repeat the previous RFECV step to select the best features. 61 features are selected by the model training with around 315K observations.
+
 
 
 
