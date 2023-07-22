@@ -1,11 +1,11 @@
 # Data Analysis: Probability of Default Estimation
 
-In this notebook, I aimed to predict whether a loan was going to be charged off or fully paid with two tree-based Machine Learning (ML) models, namely Random Forest and XGBoost. I used the Lending Club dataset, which is a big dataset. Therefore, since some of the implementations, such as oversampling using SMOTE AdaSyn or Recursive Feature Elimination with GridSearchCV, were computationally expensive, you will see a lot of commented sections. However, my goal here is to show you my thought process while doing data analysis. Logistic Regression as a base model was implemented by my teammate, so it was not uploaded.
+In this notebook, I aimed to predict whether a loan was going to be charged off or fully paid with two tree-based Machine Learning (ML) models, namely `Random Forest` and `XGBoost`. I used the Lending Club dataset, which is a big dataset. Therefore, since some of the implementations, such as oversampling using `SMOTE AdaSyn` or `Recursive Feature Elimination with GridSearchCV (RFECV)`, were computationally expensive, you will see a lot of commented sections. However, my goal here is to show you my thought process while doing data analysis. Logistic Regression as a base model was implemented by my teammate, so it was not uploaded.
 
 ## Data Description and Data Preprocessing
 ### Data Description
 
-The Lending Club data is an highly-imbalanced and complex dataset, containing over 2.260.700 accepted loan records with 151 columns of data. The loans are issued on the peer-to-peer lending platform. This platform allows small businesses and individuals to borrow money directly from investors, instead of using intermediaries. The data ranges from 2007 to 2018.
+The Lending Club data is a highly imbalanced and complex dataset, containing over 2.260.700 accepted loan records with 151 columns of data. The loans are issued on the peer-to-peer lending platform. This platform allows small businesses and individuals to borrow money directly from investors, instead of using intermediaries. The data ranges from 2007 to 2018.
 
 The records in the data represent a single loan holder with individual characteristics, which will serve as my explanatory variables in the credit default prediction. The target variable, after data processing, can be divided into two categories:
 - Assigned `0` for loan statuses: `Fully Paid` and `Does not meet the credit policy. Status: Fully Paid`.
@@ -52,7 +52,7 @@ After looking at the variables, the next steps were the encoding and standardisa
 I split my dataset into three parts by selecting random observations: train, validation, and test: 60% for training, and 20% for validation and test data for each. 
 
 ### Feature Selection
-After looking at correlations, I used recursive feature elimination with cross-validation to select features. Recursive Feature Elimination with Cross-Validation (RFECV) is a feature selection technique that combines two popular methods (recursive feature elimination and cross-validation), to automatically identify the most relevant features for a given model.
+After looking at correlations, I used recursive feature elimination with cross-validation to select features. RFECV is a feature selection technique that combines two popular methods (recursive feature elimination and cross-validation), to automatically identify the most relevant features for a given model.
 
 The RFECV method works by recursively eliminating less important features and assessing the model’s performance using cross-validation. The initial step involves ranking all input features based on their importance. Then, it iteratively eliminates the least significant features until arriving at the desired number of remaining features. During each iteration, the model undergoes training and evaluation using cross-validation to estimate its performance accurately.
 
@@ -60,12 +60,19 @@ This process helps identify critical features that contribute significantly to p
 
 ### Deciding Oversampling vs. Undersampling
 
-Since this is an imbalanced dataset, after splitting my dataset, I decided to try taking the hardest route and oversampling my data with the ADASYN method. Adaptive Synthetic Sampling (ADASYN) is a data augmentation technique that addresses the issue of class imbalance in machine learning. Class imbalance occurs when one class has significantly more or fewer instances than another, leading to biased model performance and my data has this problem. The ADASYN approach generates synthetic samples for the minority class by examining the density distribution of each feature and generating new examples along directions where data points are scarce.
+Since this is an imbalanced dataset, after splitting my dataset, I decided to try taking the hardest route and oversampling my data with the AdaSyn method. `Adaptive Synthetic Sampling (AdaSyn)` is a data augmentation technique that addresses the issue of class imbalance in machine learning. Class imbalance occurs when one class has significantly more or fewer instances than another, leading to biased model performance and my data has this problem. The AdaSyn approach generates synthetic samples for the minority class by examining the density distribution of each feature and generating new examples along directions where data points are scarce.
 
-I also utilised the GridSearchCV method to tune ADASYN’s n_neighbors parameter with Stratified CV which is a technique in machine learning to evaluate the performance of classification models on imbalanced datasets. However, since the dataset got even bigger, the Recursive Feature Selection with GridSearchCV (RFECV) algorithm to select important features took a lot of time. Furthermore, I tried to train my first ML model using the linear SVM algorithm but it was computationally exhaustive to train around 1.3 million observations with 48 features.
+I also utilised the GridSearchCV method to tune AdaSyn’s n_neighbors parameter with Stratified CV which is a technique in machine learning to evaluate the performance of classification models on imbalanced datasets. However, since the dataset got even bigger, the RFECV algorithm to select important features took a lot of time. Furthermore, I tried to train my first ML model using the linear SVM algorithm but it was computationally exhaustive to train around 1.3 million observations with 48 features.
 
 After my initial attempt at oversampling, I decided to move forward with undersampling. I utilised Imblearn’s `RandomUnderSampler` class to create a balanced training dataset. It undersamples the majority class by randomly picking samples with or without replacement. I used the default sampling strategy. After this step, I repeat the previous RFECV step to select the best features. 61 features are selected by the model training with around 315K observations.
 
+
+## Model Results
+| Model                   | Accuracy | AUC    | Precision | F1     |
+| ----------------------- |:--------:|:------:|:---------:|:------:|
+| Logistic Regression     | 0.6581   | 0.6539 | 0.8823    | 0.7557 |
+| Random Forest           | 0.6324   | 0.6532 | 0.3104    | 0.4278 |
+| XGBoost                 | 0.6468   | 0.6568 | 0.3194    | 0.4344 |
 
 
 
